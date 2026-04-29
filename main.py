@@ -463,7 +463,8 @@ def transfer(
             detail="User not found."
         )
 
-    if user["balance"] < body.amount:
+    current_balance = float(user["balance"])
+    if current_balance < body.amount:
         conn.close()
 
         raise HTTPException(
@@ -472,9 +473,9 @@ def transfer(
         )
 
     new_balance = round(
-        user["balance"] - body.amount,
+        current_balance - body.amount,
         2
-    )
+        )
 
     tx_id = "TX" + str(uuid.uuid4())[:8].upper()
 
