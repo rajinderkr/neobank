@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: neobank-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DB_PATH
+        value: /var/data/neobank.db
+    disk:
+      name: neobank-db
+      mountPath: /var/data
+      sizeGB: 1

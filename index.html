@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeoBank — Digital Banking</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #111827;
+    --bg3: #1a2235;
+    --card: #151d2e;
+    --card2: #1e2a3f;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.12);
+    --accent: #00d4aa;
+    --accent2: #0099ff;
+    --accent3: #7c3aed;
+    --danger: #ef4444;
+    --warn: #f59e0b;
+    --success: #10b981;
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --font: 'DM Sans', sans-serif;
+    --serif: 'DM Serif Display', serif;
+    --mono: 'JetBrains Mono', monospace;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  /* ── BACKGROUND MESH ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(0,212,170,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 80% 90%, rgba(0,153,255,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 60% 40%, rgba(124,58,237,0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 64px;
+    background: rgba(10,14,26,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo { font-family: var(--serif); font-size: 1.5rem; color: var(--text); letter-spacing: -0.02em; }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 0.25rem; align-items: center; }
+  .nav-btn {
+    background: none; border: none; color: var(--text2); font-family: var(--font);
+    font-size: 0.875rem; padding: 0.5rem 0.875rem; border-radius: 8px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .nav-btn:hover, .nav-btn.active { color: var(--text); background: var(--card2); }
+  .nav-user {
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent3), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer;
+  }
+
+  /* ── LAYOUT ── */
+  .app { display: none; padding-top: 64px; min-height: 100vh; position: relative; z-index: 1; }
+  .app.active { display: block; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+  /* ── AUTH ── */
+  #page-auth {
+    display: none; min-height: 100vh; position: relative; z-index: 1;
+    align-items: center; justify-content: center;
+  }
+  #page-auth.active { display: flex; }
+  .auth-card {
+    background: var(--card); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 2.5rem; width: 100%; max-width: 420px;
+    animation: fadeUp 0.4s ease;
+  }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+  .auth-logo { text-align: center; margin-bottom: 2rem; }
+  .auth-logo h1 { font-family: var(--serif); font-size: 2rem; }
+  .auth-logo h1 span { color: var(--accent); }
+  .auth-logo p { color: var(--text2); font-size: 0.875rem; margin-top: 0.25rem; }
+  .auth-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: var(--bg2); border-radius: 10px; padding: 4px; }
+  .auth-tab {
+    flex: 1; background: none; border: none; color: var(--text2); font-family: var(--font);
+    font-size: 0.875rem; font-weight: 500; padding: 0.5rem; border-radius: 7px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .auth-tab.active { background: var(--card2); color: var(--text); }
+
+  /* ── FORMS ── */
+  .form-group { margin-bottom: 1rem; }
+  label { display: block; font-size: 0.8rem; color: var(--text2); font-weight: 500; margin-bottom: 0.375rem; letter-spacing: 0.02em; }
+  input, select, textarea {
+    width: 100%; background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 10px; color: var(--text); font-family: var(--font); font-size: 0.9rem;
+    padding: 0.75rem 1rem; outline: none; transition: border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--text3); }
+  select option { background: var(--bg2); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    width: 100%; padding: 0.875rem; border-radius: 10px; border: none;
+    font-family: var(--font); font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; letter-spacing: 0.01em;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #00b894);
+    color: #0a0e1a;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-outline {
+    background: none; border: 1px solid var(--border2); color: var(--text);
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-sm { padding: 0.5rem 1rem; font-size: 0.8rem; width: auto; border-radius: 8px; }
+  .btn-icon {
+    width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border2);
+    background: none; color: var(--text2); cursor: pointer; display: flex;
+    align-items: center; justify-content: center; font-size: 1.1rem; transition: all 0.2s;
+    font-family: var(--font);
+  }
+  .btn-icon:hover { background: var(--card2); color: var(--text); }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem;
+  }
+  .card-accent { border-color: rgba(0,212,170,0.2); }
+
+  /* ── BALANCE CARD ── */
+  .balance-card {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    border: 1px solid rgba(0,212,170,0.2);
+    border-radius: var(--radius); padding: 2rem;
+    position: relative; overflow: hidden;
+  }
+  .balance-card::after {
+    content: '';
+    position: absolute; top: -40%; right: -20%;
+    width: 300px; height: 300px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,212,170,0.1) 0%, transparent 70%);
+  }
+  .balance-label { font-size: 0.8rem; color: rgba(255,255,255,0.6); letter-spacing: 0.08em; text-transform: uppercase; }
+  .balance-amount { font-family: var(--serif); font-size: 3rem; margin: 0.25rem 0; letter-spacing: -0.02em; }
+  .balance-amount .cents { font-size: 1.5rem; color: rgba(255,255,255,0.7); }
+  .balance-card-number { font-family: var(--mono); font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-top: 1.5rem; letter-spacing: 0.1em; }
+  .balance-meta { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 0.5rem; }
+
+  /* ── STAT CHIPS ── */
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0; }
+  .stat-chip { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1.25rem; }
+  .stat-chip .label { font-size: 0.75rem; color: var(--text2); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.375rem; }
+  .stat-chip .value { font-size: 1.4rem; font-weight: 600; }
+  .stat-chip .change { font-size: 0.75rem; color: var(--text3); margin-top: 0.25rem; }
+  .up { color: var(--success); }
+  .down { color: var(--danger); }
+
+  /* ── QUICK ACTIONS ── */
+  .actions-row { display: flex; gap: 0.75rem; margin: 1.5rem 0; }
+  .action-btn {
+    flex: 1; background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 1rem 0.5rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    cursor: pointer; transition: all 0.2s; color: var(--text2); font-size: 0.8rem;
+    font-family: var(--font); font-weight: 500;
+  }
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,212,170,0.04); transform: translateY(-2px); }
+  .action-icon { font-size: 1.4rem; }
+
+  /* ── TRANSACTIONS ── */
+  .tx-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .tx-item {
+    display: flex; align-items: center; gap: 1rem;
+    background: var(--card2); border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem; transition: background 0.15s;
+  }
+  .tx-item:hover { background: #243048; }
+  .tx-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0;
+  }
+  .tx-info { flex: 1; }
+  .tx-name { font-size: 0.9rem; font-weight: 500; }
+  .tx-date { font-size: 0.75rem; color: var(--text3); margin-top: 2px; }
+  .tx-amount { font-family: var(--mono); font-size: 0.9rem; font-weight: 600; text-align: right; }
+  .tx-badge {
+    font-size: 0.65rem; font-weight: 600; padding: 3px 8px; border-radius: 20px;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
+  .badge-warn { background: rgba(245,158,11,0.15); color: var(--warn); }
+  .badge-danger { background: rgba(239,68,68,0.15); color: var(--danger); }
+  .badge-info { background: rgba(0,153,255,0.15); color: var(--accent2); }
+
+  /* ── TRANSFER MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 2rem; width: 100%; max-width: 440px;
+    margin: 1rem; animation: fadeUp 0.3s ease;
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+  .modal-title { font-family: var(--serif); font-size: 1.4rem; }
+  .close-btn { background: none; border: none; color: var(--text2); font-size: 1.4rem; cursor: pointer; padding: 0.25rem; line-height: 1; }
+  .close-btn:hover { color: var(--text); }
+
+  /* ── FRAUD RESULT ── */
+  .fraud-result {
+    margin-top: 1rem; border-radius: var(--radius-sm); padding: 1rem 1.25rem;
+    border-left: 3px solid; display: none;
+  }
+  .fraud-result.show { display: block; animation: fadeUp 0.3s ease; }
+  .fraud-result.safe { background: rgba(16,185,129,0.08); border-color: var(--success); }
+  .fraud-result.warn { background: rgba(245,158,11,0.08); border-color: var(--warn); }
+  .fraud-result.alert { background: rgba(239,68,68,0.08); border-color: var(--danger); }
+  .fraud-title { font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem; }
+  .fraud-text { font-size: 0.8rem; color: var(--text2); line-height: 1.5; }
+
+  /* ── API STATUS ── */
+  .api-badge {
+    display: inline-flex; align-items: center; gap: 0.375rem;
+    font-size: 0.75rem; font-family: var(--mono); color: var(--text3);
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 10px;
+  }
+  .api-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* ── LOANS ── */
+  .loan-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem;
+  }
+  .loan-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+  .loan-type { font-weight: 600; font-size: 1rem; }
+  .loan-amount { font-family: var(--mono); font-size: 1.1rem; color: var(--accent); }
+  .progress-bar { height: 6px; background: var(--bg2); border-radius: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.6s ease; }
+
+  /* ── PROFILE ── */
+  .profile-header {
+    display: flex; align-items: center; gap: 1.5rem;
+    margin-bottom: 2rem; padding: 2rem;
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .profile-avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent3), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif); font-size: 1.75rem; color: white;
+  }
+  .profile-name { font-family: var(--serif); font-size: 1.5rem; }
+  .profile-email { color: var(--text2); font-size: 0.875rem; margin-top: 0.25rem; }
+
+  /* ── SECTION HEADERS ── */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .section-title { font-size: 1rem; font-weight: 600; color: var(--text); }
+  .section-link { font-size: 0.8rem; color: var(--accent); text-decoration: none; cursor: pointer; background: none; border: none; font-family: var(--font); }
+
+  /* ── GRID LAYOUTS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+
+  /* ── SETTINGS ROWS ── */
+  .setting-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 0; border-bottom: 1px solid var(--border);
+  }
+  .setting-row:last-child { border-bottom: none; }
+  .toggle {
+    width: 44px; height: 24px; background: var(--bg2); border-radius: 12px;
+    position: relative; cursor: pointer; transition: background 0.2s; border: none;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px; background: white; border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .toggle.on::after { transform: translateX(20px); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem; z-index: 300;
+    background: var(--card); border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 1rem 1.5rem;
+    display: flex; align-items: center; gap: 0.75rem;
+    max-width: 340px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: slideIn 0.3s ease; transform: translateX(0);
+  }
+  @keyframes slideIn { from { opacity:0; transform: translateX(100px); } to { opacity:1; transform: translateX(0); } }
+  .toast-icon { font-size: 1.2rem; }
+  .toast-text { font-size: 0.875rem; }
+  .toast-title { font-weight: 600; margin-bottom: 2px; }
+  .toast-sub { color: var(--text2); font-size: 0.8rem; }
+
+  /* ── SPINNER ── */
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.2); border-top-color: white;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 3rem; color: var(--text3); }
+  .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5; }
+
+  /* ── CHART ── */
+  .mini-chart { display: flex; align-items: flex-end; gap: 4px; height: 60px; }
+  .bar { flex: 1; border-radius: 4px 4px 0 0; background: rgba(0,212,170,0.3); transition: all 0.3s; min-width: 8px; }
+  .bar.active { background: var(--accent); }
+  .bar:hover { background: var(--accent); opacity: 0.8; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── TABLE ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .data-table th { text-align: left; padding: 0.75rem 1rem; color: var(--text3); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  .data-table td { padding: 0.875rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ── ALERT BOX ── */
+  .alert { border-radius: var(--radius-sm); padding: 0.875rem 1rem; font-size: 0.875rem; margin-bottom: 1rem; }
+  .alert-info { background: rgba(0,153,255,0.1); border: 1px solid rgba(0,153,255,0.2); color: var(--accent2); }
+  .alert-success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: var(--success); }
+  .alert-warn { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); color: var(--warn); }
+
+  /* ── API KEY CONFIG ── */
+  .api-config {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 1rem;
+    display: flex; gap: 0.75rem; align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  .api-config input { margin: 0; font-family: var(--mono); font-size: 0.8rem; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .container { padding: 1rem; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+    .balance-amount { font-size: 2rem; }
+    nav { padding: 0 1rem; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════ AUTH PAGE ══ -->
+<div id="page-auth" class="active">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <h1>Neo<span>Bank</span></h1>
+      <p>The future of digital banking</p>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuth('login')">Sign In</button>
+      <button class="auth-tab" onclick="switchAuth('register')">Register</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="form-login">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="you@example.com" value="demo@neobank.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" value="demo1234">
+      </div>
+      <div id="login-error" class="alert alert-warn" style="display:none"></div>
+      <button class="btn btn-primary" onclick="doLogin()" style="margin-top:0.5rem" id="login-btn">Sign In</button>
+      <p style="text-align:center;color:var(--text3);font-size:0.8rem;margin-top:1rem">
+        Demo: demo@neobank.com / demo1234
+      </p>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="form-register" style="display:none">
+      <div class="grid-2" style="gap:0.75rem">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" id="reg-first" placeholder="John">
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" id="reg-last" placeholder="Doe">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="Min 8 characters">
+      </div>
+      <div class="form-group">
+        <label>Account Type</label>
+        <select id="reg-type">
+          <option value="checking">Checking Account</option>
+          <option value="savings">Savings Account</option>
+          <option value="business">Business Account</option>
+        </select>
+      </div>
+      <div id="reg-error" class="alert alert-warn" style="display:none"></div>
+      <button class="btn btn-primary" onclick="doRegister()" id="reg-btn">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ MAIN APP ══ -->
+<nav id="main-nav" style="display:none">
+  <div class="nav-logo">Neo<span>Bank</span></div>
+  <div class="nav-links">
+    <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="nav-btn" onclick="showPage('transactions')">Transactions</button>
+    <button class="nav-btn" onclick="showPage('transfer')">Transfer</button>
+    <button class="nav-btn" onclick="showPage('loans')">Loans</button>
+    <button class="nav-btn" onclick="showPage('profile')">Profile</button>
+  </div>
+  <div class="nav-user">
+    <div class="api-badge" id="api-status">
+      <div class="api-dot" style="background:var(--text3)"></div>
+      AI: OFF
+    </div>
+    <div class="avatar" id="nav-avatar" onclick="showPage('profile')">JD</div>
+    <button class="btn-icon" onclick="doLogout()" title="Logout">⏻</button>
+  </div>
+</nav>
+
+<!-- DASHBOARD -->
+<div class="app" id="page-dashboard">
+  <div class="container">
+    <div style="margin-bottom:1.5rem">
+      <h2 style="font-family:var(--serif);font-size:1.75rem">Good morning, <span id="dash-name" style="color:var(--accent)">User</span> 👋</h2>
+      <p style="color:var(--text3);font-size:0.875rem;margin-top:0.25rem">Here's your financial overview</p>
+    </div>
+
+    <!-- Balance Card -->
+    <div class="balance-card">
+      <div class="balance-label">Available Balance</div>
+      <div class="balance-amount" id="dash-balance">$0<span class="cents">.00</span></div>
+      <div class="balance-meta">
+        <div>
+          <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em">Account</div>
+          <div class="balance-card-number" id="dash-account-no">•••• •••• •••• 0000</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:0.75rem;color:rgba(255,255,255,0.5)">Type</div>
+          <div style="font-size:0.85rem;font-weight:500;text-transform:capitalize" id="dash-acct-type">Checking</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-chip">
+        <div class="label">Income (30d)</div>
+        <div class="value up" id="stat-income">$0</div>
+        <div class="change">▲ 12% vs last month</div>
+      </div>
+      <div class="stat-chip">
+        <div class="label">Expenses (30d)</div>
+        <div class="value down" id="stat-expense">$0</div>
+        <div class="change">▼ 5% vs last month</div>
+      </div>
+      <div class="stat-chip">
+        <div class="label">Transactions</div>
+        <div class="value" id="stat-txcount">0</div>
+        <div class="change">This month</div>
+      </div>
+    </div>
+
+    <!-- Spending Chart -->
+    <div class="card" style="margin-bottom:1.5rem">
+      <div class="section-header">
+        <span class="section-title">Spending — Last 7 Days</span>
+        <span style="font-size:0.75rem;color:var(--text3);font-family:var(--mono)">USD</span>
+      </div>
+      <div class="mini-chart" id="spend-chart"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:0.5rem">
+        <span style="font-size:0.7rem;color:var(--text3)">Mon</span>
+        <span style="font-size:0.7rem;color:var(--text3)">Tue</span>
+        <span style="font-size:0.7rem;color:var(--text3)">Wed</span>
+        <span style="font-size:0.7rem;color:var(--text3)">Thu</span>
+        <span style="font-size:0.7rem;color:var(--text3)">Fri</span>
+        <span style="font-size:0.7rem;color:var(--text3)">Sat</span>
+        <span style="font-size:0.7rem;color:var(--text3)">Sun</span>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section-header"><span class="section-title">Quick Actions</span></div>
+    <div class="actions-row">
+      <button class="action-btn" onclick="openModal('modal-transfer')">
+        <span class="action-icon">↗</span> Send Money
+      </button>
+      <button class="action-btn" onclick="showPage('transactions')">
+        <span class="action-icon">📋</span> History
+      </button>
+      <button class="action-btn" onclick="showPage('loans')">
+        <span class="action-icon">🏦</span> Loans
+      </button>
+      <button class="action-btn" onclick="showPage('profile')">
+        <span class="action-icon">⚙</span> Settings
+      </button>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div style="margin-top:1.5rem">
+      <div class="section-header">
+        <span class="section-title">Recent Transactions</span>
+        <button class="section-link" onclick="showPage('transactions')">View all →</button>
+      </div>
+      <div class="tx-list" id="dash-tx-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TRANSACTIONS -->
+<div class="app" id="page-transactions">
+  <div class="container">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+      <div>
+        <h2 style="font-family:var(--serif);font-size:1.75rem">Transactions</h2>
+        <p style="color:var(--text3);font-size:0.875rem;margin-top:0.25rem">Complete transaction history</p>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="openModal('modal-transfer')">+ New Transfer</button>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom:1.5rem">
+      <div style="display:flex;gap:1rem;flex-wrap:wrap">
+        <div style="flex:1;min-width:180px">
+          <label>Search</label>
+          <input type="text" id="tx-search" placeholder="Search transactions..." oninput="filterTx()">
+        </div>
+        <div>
+          <label>Type</label>
+          <select id="tx-filter-type" onchange="filterTx()" style="min-width:140px">
+            <option value="">All Types</option>
+            <option value="credit">Credit</option>
+            <option value="debit">Debit</option>
+          </select>
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="tx-filter-status" onchange="filterTx()" style="min-width:140px">
+            <option value="">All Status</option>
+            <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
+            <option value="flagged">Flagged</option>
+          </select>
+        </div>
+        <div>
+          <label>Category</label>
+          <select id="tx-filter-cat" onchange="filterTx()" style="min-width:140px">
+            <option value="">All Categories</option>
+            <option value="Transfer">Transfer</option>
+            <option value="Food">Food</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Bills">Bills</option>
+            <option value="Salary">Salary</option>
+            <option value="Entertainment">Entertainment</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="overflow:auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Balance</th>
+          </tr>
+        </thead>
+        <tbody id="tx-table-body"></tbody>
+      </table>
+    </div>
+    <div id="tx-empty" class="empty" style="display:none">
+      <div class="empty-icon">📭</div>
+      <div>No transactions found</div>
+    </div>
+  </div>
+</div>
+
+<!-- TRANSFER -->
+<div class="app" id="page-transfer">
+  <div class="container">
+    <div style="margin-bottom:1.5rem">
+      <h2 style="font-family:var(--serif);font-size:1.75rem">Transfer Funds</h2>
+      <p style="color:var(--text3);font-size:0.875rem;margin-top:0.25rem">Send money securely with AI fraud protection</p>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="card" style="margin-bottom:1rem">
+          <h3 style="font-size:1rem;font-weight:600;margin-bottom:1.25rem">New Transfer</h3>
+
+          <!-- Gemini API Key Config -->
+          <div class="alert alert-info" style="margin-bottom:1rem;font-size:0.8rem">
+            🤖 Enter your Gemini API key to enable AI Fraud Detection
+          </div>
+          <div class="api-config">
+            <input type="password" id="gemini-key" placeholder="AIzaSy... (Gemini API Key)" style="flex:1">
+            <button class="btn btn-outline btn-sm" onclick="saveApiKey()">Save</button>
+          </div>
+
+          <div class="form-group">
+            <label>From Account</label>
+            <select id="tf-from">
+              <option value="checking">Checking •••• 4821 — <span id="tf-bal-text"></span></option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Recipient Name</label>
+            <input type="text" id="tf-recipient" placeholder="Full name of recipient">
+          </div>
+          <div class="form-group">
+            <label>Recipient Account / Email</label>
+            <input type="text" id="tf-to-account" placeholder="account@bank.com or account number">
+          </div>
+          <div class="form-group">
+            <label>Amount (USD)</label>
+            <input type="number" id="tf-amount" placeholder="0.00" min="0.01" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Transfer Type</label>
+            <select id="tf-type">
+              <option value="standard">Standard (2-3 days)</option>
+              <option value="express">Express (Same day) — $5 fee</option>
+              <option value="wire">Wire Transfer — $25 fee</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Note (optional)</label>
+            <input type="text" id="tf-note" placeholder="What's this for?">
+          </div>
+
+          <div id="tf-error" class="alert alert-warn" style="display:none;margin-bottom:1rem"></div>
+
+          <div style="display:flex;gap:0.75rem">
+            <button class="btn btn-outline" onclick="checkFraud()" id="fraud-btn" style="flex:1">
+              🛡 AI Check
+            </button>
+            <button class="btn btn-primary" onclick="doTransfer()" id="transfer-btn" style="flex:2">
+              Send Money
+            </button>
+          </div>
+        </div>
+
+        <!-- Fraud Result -->
+        <div class="fraud-result" id="fraud-result">
+          <div class="fraud-title" id="fraud-title"></div>
+          <div class="fraud-text" id="fraud-text"></div>
+        </div>
+      </div>
+
+      <!-- Right panel -->
+      <div>
+        <div class="card" style="margin-bottom:1rem">
+          <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem">Recent Recipients</h3>
+          <div id="recipients-list"></div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem">Transfer Limits</h3>
+          <div class="setting-row" style="padding:0.5rem 0">
+            <span style="font-size:0.85rem;color:var(--text2)">Daily Limit</span>
+            <span style="font-family:var(--mono);font-size:0.85rem">$10,000.00</span>
+          </div>
+          <div class="setting-row" style="padding:0.5rem 0">
+            <span style="font-size:0.85rem;color:var(--text2)">Used Today</span>
+            <span style="font-family:var(--mono);font-size:0.85rem" id="used-today">$0.00</span>
+          </div>
+          <div class="setting-row" style="padding:0.5rem 0">
+            <span style="font-size:0.85rem;color:var(--text2)">Remaining</span>
+            <span style="font-family:var(--mono);font-size:0.85rem;color:var(--success)" id="remaining-limit">$10,000.00</span>
+          </div>
+          <div class="progress-bar" style="margin-top:0.75rem">
+            <div class="progress-fill" id="limit-bar" style="width:0%;background:linear-gradient(90deg,var(--success),var(--warn))"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOANS -->
+<div class="app" id="page-loans">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+      <div>
+        <h2 style="font-family:var(--serif);font-size:1.75rem">Loans & Credit</h2>
+        <p style="color:var(--text3);font-size:0.875rem;margin-top:0.25rem">Manage your borrowing</p>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-loan')">Apply for Loan</button>
+    </div>
+
+    <div id="loans-list"></div>
+
+    <div class="card card-accent" style="margin-top:1.5rem">
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem">Credit Score</h3>
+      <div style="display:flex;align-items:center;gap:2rem">
+        <div style="text-align:center">
+          <div style="font-family:var(--serif);font-size:3rem;color:var(--accent)" id="credit-score">742</div>
+          <div style="font-size:0.75rem;color:var(--text3)">FICO Score</div>
+        </div>
+        <div style="flex:1">
+          <div class="progress-bar" style="height:10px;margin-bottom:0.5rem">
+            <div class="progress-fill" id="score-bar" style="width:70%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--text3)">
+            <span>Poor (300)</span><span>Good (670)</span><span>Excellent (850)</span>
+          </div>
+          <div class="alert alert-success" style="margin-top:1rem;padding:0.75rem">
+            ✓ Good standing — eligible for premium rates
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="app" id="page-profile">
+  <div class="container">
+    <h2 style="font-family:var(--serif);font-size:1.75rem;margin-bottom:1.5rem">Profile & Settings</h2>
+
+    <div class="profile-header">
+      <div class="profile-avatar" id="profile-avatar-initials">JD</div>
+      <div>
+        <div class="profile-name" id="profile-full-name">John Doe</div>
+        <div class="profile-email" id="profile-email-text">john@example.com</div>
+        <div style="margin-top:0.5rem">
+          <span class="tx-badge badge-success">Verified ✓</span>
+          &nbsp;
+          <span class="tx-badge badge-info" id="profile-acct-badge">Checking</span>
+        </div>
+      </div>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="openModal('modal-edit-profile')">Edit Profile</button>
+    </div>
+
+    <div class="grid-2">
+      <!-- Account Details -->
+      <div class="card">
+        <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem">Account Details</h3>
+        <div class="setting-row">
+          <span style="font-size:0.85rem;color:var(--text2)">Account Number</span>
+          <span style="font-family:var(--mono);font-size:0.8rem" id="profile-account-no">—</span>
+        </div>
+        <div class="setting-row">
+          <span style="font-size:0.85rem;color:var(--text2)">Routing Number</span>
+          <span style="font-family:var(--mono);font-size:0.8rem">021000021</span>
+        </div>
+        <div class="setting-row">
+          <span style="font-size:0.85rem;color:var(--text2)">Account Type</span>
+          <span style="font-size:0.85rem;text-transform:capitalize" id="profile-acct-type">Checking</span>
+        </div>
+        <div class="setting-row">
+          <span style="font-size:0.85rem;color:var(--text2)">Member Since</span>
+          <span style="font-size:0.85rem" id="profile-since">—</span>
+        </div>
+      </div>
+
+      <!-- Security Settings -->
+      <div class="card">
+        <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem">Security & Notifications</h3>
+        <div class="setting-row">
+          <div>
+            <div style="font-size:0.875rem;font-weight:500">Two-Factor Auth</div>
+            <div style="font-size:0.75rem;color:var(--text3)">SMS verification</div>
+          </div>
+          <button class="toggle on" onclick="toggleThis(this)"></button>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div style="font-size:0.875rem;font-weight:500">Transaction Alerts</div>
+            <div style="font-size:0.75rem;color:var(--text3)">Email & push</div>
+          </div>
+          <button class="toggle on" onclick="toggleThis(this)"></button>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div style="font-size:0.875rem;font-weight:500">AI Fraud Detection</div>
+            <div style="font-size:0.75rem;color:var(--text3)">Powered by Gemini</div>
+          </div>
+          <button class="toggle" id="ai-toggle" onclick="toggleAI(this)"></button>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div style="font-size:0.875rem;font-weight:500">Marketing Emails</div>
+            <div style="font-size:0.75rem;color:var(--text3)">Promotions & offers</div>
+          </div>
+          <button class="toggle" onclick="toggleThis(this)"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem">
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:1rem">Gemini AI Configuration</h3>
+      <p style="font-size:0.85rem;color:var(--text2);margin-bottom:1rem">Configure your Gemini API key for AI-powered fraud detection on transactions.</p>
+      <div style="display:flex;gap:0.75rem">
+        <input type="password" id="profile-gemini-key" placeholder="AIzaSy... Paste your Gemini API key" style="flex:1;font-family:var(--mono);font-size:0.8rem">
+        <button class="btn btn-primary btn-sm" onclick="saveApiKeyFromProfile()">Save Key</button>
+        <button class="btn btn-outline btn-sm" onclick="testApiKey()">Test</button>
+      </div>
+      <div id="api-test-result" style="margin-top:0.75rem;font-size:0.8rem;color:var(--text3)"></div>
+    </div>
+
+    <div style="margin-top:1.5rem">
+      <button class="btn btn-danger" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ MODALS ══ -->
+
+<!-- Transfer Modal -->
+<div class="modal-overlay" id="modal-transfer">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Send Money</div>
+      <button class="close-btn" onclick="closeModal('modal-transfer')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Recipient</label>
+      <input type="text" id="m-recipient" placeholder="Name or account">
+    </div>
+    <div class="form-group">
+      <label>Amount</label>
+      <input type="number" id="m-amount" placeholder="0.00" min="0.01" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>Note</label>
+      <input type="text" id="m-note" placeholder="Optional note">
+    </div>
+    <div style="display:flex;gap:0.75rem;margin-top:0.5rem">
+      <button class="btn btn-outline" onclick="closeModal('modal-transfer')">Cancel</button>
+      <button class="btn btn-primary" onclick="doQuickTransfer()">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loan Modal -->
+<div class="modal-overlay" id="modal-loan">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Apply for Loan</div>
+      <button class="close-btn" onclick="closeModal('modal-loan')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Loan Type</label>
+      <select id="loan-type">
+        <option value="Personal Loan">Personal Loan</option>
+        <option value="Auto Loan">Auto Loan</option>
+        <option value="Home Loan">Home Loan (Mortgage)</option>
+        <option value="Business Loan">Business Loan</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Loan Amount</label>
+      <input type="number" id="loan-amount" placeholder="e.g. 10000" min="1000">
+    </div>
+    <div class="form-group">
+      <label>Term (months)</label>
+      <select id="loan-term">
+        <option value="12">12 months</option>
+        <option value="24">24 months</option>
+        <option value="36" selected>36 months</option>
+        <option value="48">48 months</option>
+        <option value="60">60 months</option>
+      </select>
+    </div>
+    <div id="loan-preview" style="background:var(--bg2);border-radius:var(--radius-sm);padding:0.75rem;margin-bottom:1rem;font-size:0.85rem;display:none">
+      <div style="display:flex;justify-content:space-between">
+        <span style="color:var(--text2)">Monthly Payment</span>
+        <span style="font-family:var(--mono);font-weight:600" id="loan-monthly">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:0.5rem">
+        <span style="color:var(--text2)">Interest Rate</span>
+        <span style="font-family:var(--mono)" id="loan-rate">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:0.5rem">
+        <span style="color:var(--text2)">Total Repayment</span>
+        <span style="font-family:var(--mono)" id="loan-total">—</span>
+      </div>
+    </div>
+    <div id="loan-error" class="alert alert-warn" style="display:none;margin-bottom:0.75rem"></div>
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn btn-outline" onclick="closeModal('modal-loan')">Cancel</button>
+      <button class="btn btn-outline btn-sm" onclick="previewLoan()" style="flex:0.5">Preview</button>
+      <button class="btn btn-primary" onclick="submitLoan()" style="flex:1">Apply Now</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal-overlay" id="modal-edit-profile">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Edit Profile</div>
+      <button class="close-btn" onclick="closeModal('modal-edit-profile')">×</button>
+    </div>
+    <div class="grid-2" style="gap:0.75rem">
+      <div class="form-group">
+        <label>First Name</label>
+        <input type="text" id="edit-first">
+      </div>
+      <div class="form-group">
+        <label>Last Name</label>
+        <input type="text" id="edit-last">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Phone</label>
+      <input type="tel" id="edit-phone" placeholder="+1 (555) 000-0000">
+    </div>
+    <div class="form-group">
+      <label>Address</label>
+      <input type="text" id="edit-address" placeholder="123 Main St, City, State">
+    </div>
+    <div style="display:flex;gap:0.75rem;margin-top:0.5rem">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-profile')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast" style="display:none">
+  <div class="toast-icon" id="toast-icon">✓</div>
+  <div class="toast-text">
+    <div class="toast-title" id="toast-title">Success</div>
+    <div class="toast-sub" id="toast-sub"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ SCRIPT ══ -->
+<script>
+// ═══════════════════════════════════════════════════
+// NEOBANK — Real API Version
+// All calls go to FastAPI backend
+// ═══════════════════════════════════════════════════
+
+const API = window.location.origin; // auto-detects http://localhost:8000 or Render URL
+
+let state = {
+  user: null,
+  transactions: [],
+  loans: [],
+  token: '',
+  geminiKey: '',
+  aiEnabled: false
+};
+
+const CATEGORY_ICONS = {
+  Salary:'💰', 'Food & Dining':'🍔', Shopping:'🛒', 'Bills & Utilities':'⚡',
+  Transfer:'↔', Entertainment:'🎬', Income:'💰', Health:'🏥', Cash:'💵', Other:'💳'
+};
+
+// ── API HELPER ─────────────────────────────────────
+async function api(method, path, body = null) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+  const opts = { method, headers };
+  if (body) opts.body = JSON.stringify(body);
+  const resp = await fetch(API + path, opts);
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.detail || 'Request failed');
+  return data;
+}
+
+// ── SESSION PERSISTENCE ────────────────────────────
+function saveSession() {
+  localStorage.setItem('neobank_token', state.token);
+  localStorage.setItem('neobank_gemini', state.geminiKey);
+  localStorage.setItem('neobank_ai', state.aiEnabled ? '1' : '0');
+}
+
+function loadSession() {
+  state.token = localStorage.getItem('neobank_token') || '';
+  state.geminiKey = localStorage.getItem('neobank_gemini') || '';
+  state.aiEnabled = localStorage.getItem('neobank_ai') === '1';
+}
+
+// ── INIT ───────────────────────────────────────────
+async function init() {
+  loadSession();
+  if (state.token) {
+    try {
+      const profile = await api('GET', '/api/account/profile');
+      state.user = {
+        firstName: profile.first_name, lastName: profile.last_name,
+        email: profile.email, accountType: profile.account_type,
+        accountNumber: profile.account_number, balance: profile.balance,
+        creditScore: profile.credit_score, memberSince: profile.member_since,
+        phone: profile.phone, address: profile.address
+      };
+      await loadTransactions();
+      await loadLoans();
+      enterApp();
+    } catch(e) {
+      // token expired
+      state.token = '';
+      localStorage.removeItem('neobank_token');
+    }
+  }
+}
+
+async function loadTransactions() {
+  const data = await api('GET', '/api/transactions?limit=100');
+  state.transactions = data.transactions.map(t => ({
+    id: t.id, date: t.date, description: t.description,
+    category: t.category, type: t.type, amount: t.amount,
+    status: t.status, note: t.note
+  }));
+}
+
+async function loadLoans() {
+  const data = await api('GET', '/api/loans');
+  state.loans = data.loans.map(l => ({
+    id: l.id, type: l.type, amount: l.amount, remaining: l.remaining,
+    rate: l.rate, monthlyPayment: l.monthly_payment, status: l.status,
+    startDate: l.applied_on, endDate: ''
+  }));
+}
+
+// ── AUTH ───────────────────────────────────────────
+function switchAuth(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.querySelector('#form-login .btn-primary');
+  errEl.style.display = 'none';
+  if (!email || !pass) { errEl.textContent = 'Please enter email and password.'; errEl.style.display = 'block'; return; }
+
+  btn.innerHTML = '<span class="spinner"></span> Signing in...';
+  btn.disabled = true;
+  try {
+    const data = await api('POST', '/api/auth/login', { email, password: pass });
+    state.token = data.access_token;
+    state.user = {
+      firstName: data.first_name, lastName: data.last_name,
+      email: data.email, accountType: 'checking',
+      accountNumber: '', balance: 0, memberSince: ''
+    };
+    // load full profile
+    const profile = await api('GET', '/api/account/profile');
+    state.user = {
+      firstName: profile.first_name, lastName: profile.last_name,
+      email: profile.email, accountType: profile.account_type,
+      accountNumber: profile.account_number, balance: profile.balance,
+      creditScore: profile.credit_score, memberSince: profile.member_since,
+      phone: profile.phone, address: profile.address
+    };
+    await loadTransactions();
+    await loadLoans();
+    saveSession();
+    enterApp();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+  btn.innerHTML = 'Sign In'; btn.disabled = false;
+}
+
+async function doRegister() {
+  const first = document.getElementById('reg-first').value.trim();
+  const last = document.getElementById('reg-last').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-password').value;
+  const type = document.getElementById('reg-type').value;
+  const errEl = document.getElementById('reg-error');
+  const btn = document.querySelector('#form-register .btn-primary');
+  errEl.style.display = 'none';
+
+  if (!first || !last || !email || !pass) { errEl.textContent = 'All fields required.'; errEl.style.display = 'block'; return; }
+  if (pass.length < 8) { errEl.textContent = 'Password must be at least 8 characters.'; errEl.style.display = 'block'; return; }
+
+  btn.innerHTML = '<span class="spinner"></span> Creating account...';
+  btn.disabled = true;
+  try {
+    const data = await api('POST', '/api/auth/register', {
+      first_name: first, last_name: last, email, password: pass, account_type: type
+    });
+    state.token = data.access_token;
+    const profile = await api('GET', '/api/account/profile');
+    state.user = {
+      firstName: profile.first_name, lastName: profile.last_name,
+      email: profile.email, accountType: profile.account_type,
+      accountNumber: profile.account_number, balance: profile.balance,
+      creditScore: profile.credit_score, memberSince: profile.member_since,
+      phone: profile.phone, address: profile.address
+    };
+    state.transactions = []; state.loans = [];
+    saveSession();
+    showToast('✓', 'Account Created!', 'Welcome to NeoBank, ' + first + '!');
+    enterApp();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+  btn.innerHTML = 'Create Account'; btn.disabled = false;
+}
+
+function doLogout() {
+  state = { user: null, transactions: [], loans: [], token: '', geminiKey: '', aiEnabled: false };
+  localStorage.removeItem('neobank_token');
+  document.getElementById('main-nav').style.display = 'none';
+  document.querySelectorAll('.app').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-auth').classList.add('active');
+}
+
+function enterApp() {
+  document.getElementById('page-auth').classList.remove('active');
+  document.getElementById('main-nav').style.display = 'flex';
+  updateNavAvatar();
+  showPage('dashboard');
+}
+
+// ── NAVIGATION ─────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.app').forEach(a => a.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const btns = document.querySelectorAll('.nav-btn');
+  btns.forEach(b => { if (b.textContent.toLowerCase().includes(name)) b.classList.add('active'); });
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'transactions') renderTransactions();
+  if (name === 'transfer') renderTransferPage();
+  if (name === 'loans') renderLoans();
+  if (name === 'profile') renderProfile();
+}
+
+// ── DASHBOARD ──────────────────────────────────────
+function renderDashboard() {
+  const u = state.user;
+  document.getElementById('dash-name').textContent = u.firstName;
+  const bal = u.balance;
+  const balStr = bal.toFixed(2).split('.');
+  document.getElementById('dash-balance').innerHTML = '$' + Number(balStr[0]).toLocaleString() + '<span class="cents">.' + balStr[1] + '</span>';
+  document.getElementById('dash-account-no').textContent = '•••• •••• •••• ' + (u.accountNumber || '').slice(-4);
+  document.getElementById('dash-acct-type').textContent = u.accountType;
+  const txs = state.transactions;
+  const credits = txs.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0);
+  const debits = txs.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0);
+  document.getElementById('stat-income').textContent = '$' + credits.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('stat-expense').textContent = '$' + debits.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('stat-txcount').textContent = txs.length;
+  renderSpendChart();
+  renderDashTx();
+}
+
+function renderSpendChart() {
+  const chart = document.getElementById('spend-chart');
+  const vals = [145, 89, 230, 67, 312, 178, 95];
+  const max = Math.max(...vals);
+  chart.innerHTML = vals.map((v, i) =>
+    `<div class="bar ${i===6?'active':''}" style="height:${Math.max(8, (v/max)*56)}px" title="$${v}"></div>`
+  ).join('');
+}
+
+function renderDashTx() {
+  const list = document.getElementById('dash-tx-list');
+  const recent = state.transactions.slice(0, 5);
+  if (!recent.length) { list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div>No transactions yet</div></div>'; return; }
+  list.innerHTML = recent.map(tx => txItemHTML(tx)).join('');
+}
+
+function txItemHTML(tx) {
+  const icon = CATEGORY_ICONS[tx.category] || '💳';
+  const amtClass = tx.type === 'credit' ? 'up' : 'down';
+  const amtPrefix = tx.type === 'credit' ? '+' : '-';
+  const badgeClass = tx.status === 'completed' ? 'badge-success' : tx.status === 'pending' ? 'badge-warn' : 'badge-danger';
+  return `
+    <div class="tx-item">
+      <div class="tx-icon" style="background:var(--card)">${icon}</div>
+      <div class="tx-info">
+        <div class="tx-name">${tx.description}</div>
+        <div class="tx-date">${formatDate(tx.date)} · ${tx.category}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="tx-amount ${amtClass}">${amtPrefix}$${tx.amount.toFixed(2)}</div>
+        <div style="margin-top:4px"><span class="tx-badge ${badgeClass}">${tx.status}</span></div>
+      </div>
+    </div>`;
+}
+
+// ── TRANSACTIONS ────────────────────────────────────
+function renderTransactions() { filterTx(); }
+
+function filterTx() {
+  const search = (document.getElementById('tx-search')?.value || '').toLowerCase();
+  const type = document.getElementById('tx-filter-type')?.value || '';
+  const status = document.getElementById('tx-filter-status')?.value || '';
+  const cat = document.getElementById('tx-filter-cat')?.value || '';
+  let txs = state.transactions.filter(tx => {
+    if (search && !tx.description.toLowerCase().includes(search) && !tx.category.toLowerCase().includes(search)) return false;
+    if (type && tx.type !== type) return false;
+    if (status && tx.status !== status) return false;
+    if (cat && tx.category !== cat) return false;
+    return true;
+  });
+  const body = document.getElementById('tx-table-body');
+  const empty = document.getElementById('tx-empty');
+  if (!txs.length) { body.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  let runBal = state.user.balance;
+  const rows = txs.map(tx => {
+    const bal = runBal;
+    const badgeClass = tx.status === 'completed' ? 'badge-success' : tx.status === 'pending' ? 'badge-warn' : 'badge-danger';
+    const amtClass = tx.type === 'credit' ? 'up' : 'down';
+    const prefix = tx.type === 'credit' ? '+' : '-';
+    return `<tr>
+      <td style="font-family:var(--mono);font-size:0.8rem;color:var(--text2)">${formatDate(tx.date)}</td>
+      <td><div style="font-weight:500;font-size:0.875rem">${tx.description}</div>${tx.note ? `<div style="font-size:0.75rem;color:var(--text3)">${tx.note}</div>` : ''}</td>
+      <td><span class="tx-badge badge-info">${tx.category}</span></td>
+      <td><span class="tx-badge ${tx.type==='credit'?'badge-success':'badge-danger'}">${tx.type}</span></td>
+      <td class="${amtClass}" style="font-family:var(--mono);font-weight:600">${prefix}$${tx.amount.toFixed(2)}</td>
+      <td><span class="tx-badge ${badgeClass}">${tx.status}</span></td>
+      <td style="font-family:var(--mono);font-size:0.8rem;color:var(--text2)">$${bal.toLocaleString('en-US',{minimumFractionDigits:2})}</td>
+    </tr>`;
+  }).join('');
+  body.innerHTML = rows;
+}
+
+// ── TRANSFER ────────────────────────────────────────
+function renderTransferPage() {
+  if (state.user) {
+    const bal = state.user.balance.toLocaleString('en-US', {minimumFractionDigits:2});
+    const tfFrom = document.getElementById('tf-from');
+    if (tfFrom) tfFrom.innerHTML = `<option>Checking •••• ${(state.user.accountNumber||'').slice(-4)} — $${bal}</option>`;
+    const recentEl = document.getElementById('recipients-list');
+    if (recentEl) {
+      const transfers = state.transactions.filter(t => t.type === 'debit' && t.category === 'Transfer').slice(0,5);
+      if (!transfers.length) { recentEl.innerHTML = '<div style="color:var(--text3);font-size:0.85rem">No recent recipients</div>'; return; }
+      recentEl.innerHTML = transfers.map(t => {
+        const name = t.description.replace('Transfer to ','');
+        return `<div class="tx-item" style="cursor:pointer" onclick="document.getElementById('tf-recipient').value='${name}'">
+          <div class="tx-icon" style="background:var(--card)">👤</div>
+          <div class="tx-info"><div class="tx-name">${name}</div><div class="tx-date">${formatDate(t.date)}</div></div>
+          <div class="tx-amount down">-$${t.amount.toFixed(2)}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+async function doTransfer() {
+  const recipient = document.getElementById('tf-recipient').value.trim();
+  const amount = parseFloat(document.getElementById('tf-amount').value);
+  const note = document.getElementById('tf-note').value.trim();
+  const errEl = document.getElementById('tf-error');
+  const btn = document.getElementById('transfer-btn');
+  errEl.style.display = 'none';
+  if (!recipient) { errEl.textContent = 'Enter recipient name.'; errEl.style.display = 'block'; return; }
+  if (!amount || amount <= 0) { errEl.textContent = 'Enter a valid amount.'; errEl.style.display = 'block'; return; }
+
+  btn.innerHTML = '<span class="spinner"></span> Sending...';
+  btn.disabled = true;
+  try {
+    const data = await api('POST', '/api/transactions/transfer', { recipient, amount, note });
+    state.user.balance = data.new_balance;
+    await loadTransactions();
+    saveSession();
+    showToast('✓', 'Transfer Sent', `$${amount.toFixed(2)} → ${recipient}`);
+    document.getElementById('tf-recipient').value = '';
+    document.getElementById('tf-amount').value = '';
+    document.getElementById('tf-note').value = '';
+    document.getElementById('fraud-result').classList.remove('show');
+    renderTransferPage();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+  btn.innerHTML = 'Send Money'; btn.disabled = false;
+}
+
+async function doQuickTransfer() {
+  const recipient = document.getElementById('m-recipient').value.trim();
+  const amount = parseFloat(document.getElementById('m-amount').value);
+  const note = document.getElementById('m-note').value.trim();
+  if (!recipient || !amount || amount <= 0) { showToast('⚠', 'Missing Info', 'Fill in recipient and amount'); return; }
+  try {
+    const data = await api('POST', '/api/transactions/transfer', { recipient, amount, note });
+    state.user.balance = data.new_balance;
+    await loadTransactions();
+    saveSession();
+    closeModal('modal-transfer');
+    showToast('✓', 'Transfer Sent', `$${amount.toFixed(2)} → ${recipient}`);
+    if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+  } catch(e) {
+    showToast('✗', 'Transfer Failed', e.message);
+  }
+}
+
+// ── LOANS ───────────────────────────────────────────
+function renderLoans() {
+  const list = document.getElementById('loans-list');
+  if (!state.loans.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🏦</div><div>No active loans</div></div>'; return;
+  }
+  list.innerHTML = state.loans.map(loan => {
+    const pct = ((loan.amount - loan.remaining) / loan.amount * 100).toFixed(1);
+    const badgeClass = loan.status === 'active' ? 'badge-success' : 'badge-warn';
+    return `
+      <div class="loan-card">
+        <div class="loan-header">
+          <div>
+            <div class="loan-type">${loan.type}</div>
+            <div style="font-size:0.75rem;color:var(--text3);margin-top:2px">${loan.startDate}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="loan-amount">$${loan.remaining.toLocaleString('en-US',{minimumFractionDigits:2})} remaining</div>
+            <div style="font-size:0.75rem;color:var(--text3)">of $${loan.amount.toLocaleString()}</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem">
+          <span>Monthly: <strong style="color:var(--text)">$${loan.monthlyPayment.toFixed(2)}</strong></span>
+          <span>Rate: <strong style="color:var(--text)">${loan.rate}% APR</strong></span>
+          <span><span class="tx-badge ${badgeClass}">${loan.status}</span></span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div style="text-align:right;font-size:0.7rem;color:var(--text3);margin-top:4px">${pct}% paid</div>
+      </div>`;
+  }).join('');
+}
+
+function previewLoan() {
+  const amount = parseFloat(document.getElementById('loan-amount').value);
+  const term = parseInt(document.getElementById('loan-term').value);
+  if (!amount || amount < 1000) {
+    document.getElementById('loan-error').textContent = 'Min loan amount is $1,000';
+    document.getElementById('loan-error').style.display = 'block'; return;
+  }
+  document.getElementById('loan-error').style.display = 'none';
+  const rate = 0.089 / 12;
+  const monthly = (amount * rate * Math.pow(1+rate, term)) / (Math.pow(1+rate, term) - 1);
+  const total = monthly * term;
+  document.getElementById('loan-monthly').textContent = '$' + monthly.toFixed(2);
+  document.getElementById('loan-rate').textContent = '8.9% APR';
+  document.getElementById('loan-total').textContent = '$' + total.toFixed(2);
+  document.getElementById('loan-preview').style.display = 'block';
+}
+
+async function submitLoan() {
+  const type = document.getElementById('loan-type').value;
+  const amount = parseFloat(document.getElementById('loan-amount').value);
+  const term = parseInt(document.getElementById('loan-term').value);
+  const errEl = document.getElementById('loan-error');
+  const btn = document.querySelector('#modal-loan .btn-primary');
+  if (!amount || amount < 1000) { errEl.textContent = 'Min loan $1,000'; errEl.style.display = 'block'; return; }
+
+  btn.innerHTML = '<span class="spinner"></span> Applying...';
+  btn.disabled = true;
+  try {
+    const data = await api('POST', '/api/loans/apply', { type, amount, term_months: term });
+    state.user.balance = data.new_balance;
+    await loadTransactions();
+    await loadLoans();
+    saveSession();
+    closeModal('modal-loan');
+    showToast('✓', 'Loan Approved!', `$${amount.toLocaleString()} disbursed to your account`);
+    renderLoans();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+  btn.innerHTML = 'Apply for Loan'; btn.disabled = false;
+}
+
+// ── PROFILE ─────────────────────────────────────────
+function renderProfile() {
+  const u = state.user;
+  const initials = (u.firstName[0] + u.lastName[0]).toUpperCase();
+  document.getElementById('profile-avatar-initials').textContent = initials;
+  document.getElementById('profile-full-name').textContent = u.firstName + ' ' + u.lastName;
+  document.getElementById('profile-email-text').textContent = u.email;
+  document.getElementById('profile-account-no').textContent = u.accountNumber;
+  document.getElementById('profile-acct-type').textContent = u.accountType;
+  document.getElementById('profile-acct-badge').textContent = u.accountType;
+  document.getElementById('profile-since').textContent = formatDate(u.memberSince);
+  if (state.aiEnabled) document.getElementById('ai-toggle').classList.add('on');
+  if (state.geminiKey) document.getElementById('profile-gemini-key').placeholder = '•'.repeat(20) + ' (saved)';
+}
+
+function toggleAI(btn) {
+  btn.classList.toggle('on');
+  state.aiEnabled = btn.classList.contains('on');
+  saveSession(); updateApiStatus();
+  showToast('ℹ', state.aiEnabled ? 'AI Enabled' : 'AI Disabled', state.aiEnabled ? 'Fraud detection active' : 'Fraud detection paused');
+}
+
+async function saveProfile() {
+  const first = document.getElementById('edit-first').value.trim();
+  const last = document.getElementById('edit-last').value.trim();
+  const phone = document.getElementById('edit-phone').value.trim();
+  const address = document.getElementById('edit-address').value.trim();
+  try {
+    await api('PUT', '/api/account/profile', { first_name: first || undefined, last_name: last || undefined, phone, address });
+    state.user.firstName = first || state.user.firstName;
+    state.user.lastName = last || state.user.lastName;
+    state.user.phone = phone; state.user.address = address;
+    saveSession(); updateNavAvatar();
+    closeModal('modal-edit-profile');
+    showToast('✓', 'Profile Updated', 'Your changes have been saved');
+    renderProfile();
+  } catch(e) {
+    showToast('✗', 'Update Failed', e.message);
+  }
+}
+
+function updateNavAvatar() {
+  if (!state.user) return;
+  const initials = (state.user.firstName[0] + state.user.lastName[0]).toUpperCase();
+  document.getElementById('nav-avatar').textContent = initials;
+}
+
+function openModal(id) {
+  if (id === 'modal-edit-profile' && state.user) {
+    document.getElementById('edit-first').value = state.user.firstName;
+    document.getElementById('edit-last').value = state.user.lastName;
+    document.getElementById('edit-phone').value = state.user.phone || '';
+    document.getElementById('edit-address').value = state.user.address || '';
+  }
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── GEMINI AI ───────────────────────────────────────
+function saveApiKey() {
+  const key = document.getElementById('gemini-key').value.trim();
+  if (!key || key.includes('•')) { showToast('⚠', 'No key entered', 'Paste your Gemini API key'); return; }
+  state.geminiKey = key; state.aiEnabled = true;
+  saveSession(); updateApiStatus();
+  showToast('✓', 'API Key Saved', 'AI fraud detection is now active');
+  document.getElementById('gemini-key').value = '•'.repeat(20);
+}
+
+function saveApiKeyFromProfile() {
+  const key = document.getElementById('profile-gemini-key').value.trim();
+  if (!key) { showToast('⚠', 'Enter API Key', 'Paste your Gemini API key'); return; }
+  state.geminiKey = key; state.aiEnabled = true;
+  document.getElementById('ai-toggle').classList.add('on');
+  saveSession(); updateApiStatus();
+  showToast('✓', 'API Key Saved', 'Gemini AI is now active');
+  document.getElementById('profile-gemini-key').value = '•'.repeat(20);
+}
+
+function updateApiStatus() {
+  const badge = document.getElementById('api-status');
+  if (state.aiEnabled && state.geminiKey) {
+    badge.innerHTML = '<div class="api-dot" style="background:var(--success);width:6px;height:6px;border-radius:50%"></div> AI: ON';
+  } else {
+    badge.innerHTML = '<div class="api-dot" style="background:var(--text3);width:6px;height:6px;border-radius:50%"></div> AI: OFF';
+  }
+}
+
+async function checkFraud() {
+  const recipient = document.getElementById('tf-recipient').value.trim();
+  const amount = parseFloat(document.getElementById('tf-amount').value) || 0;
+  const resultEl = document.getElementById('fraud-result');
+  const btn = document.getElementById('fraud-btn');
+  if (!amount || !recipient) {
+    resultEl.className = 'fraud-result warn show';
+    document.getElementById('fraud-title').textContent = '⚠ Missing Details';
+    document.getElementById('fraud-text').textContent = 'Please fill in recipient and amount first.';
+    return;
+  }
+  btn.innerHTML = '<span class="spinner"></span> Analyzing...';
+  btn.disabled = true;
+  resultEl.classList.remove('show');
+  try {
+    // Use our real backend fraud check
+    const data = await api('POST', '/api/fraud/check', { amount, recipient });
+    const riskClass = data.risk_level === 'LOW' ? 'safe' : data.risk_level === 'MEDIUM' ? 'warn' : 'alert';
+    const riskEmoji = data.risk_level === 'LOW' ? '✅' : data.risk_level === 'MEDIUM' ? '⚠️' : '🚨';
+    resultEl.className = `fraud-result ${riskClass} show`;
+    document.getElementById('fraud-title').textContent = `${riskEmoji} ${data.risk_level} RISK`;
+    document.getElementById('fraud-text').textContent = data.reason;
+    // Also run Gemini if key is available
+    if (state.geminiKey && state.aiEnabled) {
+      const prompt = `You are a banking fraud AI. Analyze: Recipient="${recipient}", Amount=$${amount}. Respond JSON only: {"risk_level":"LOW|MEDIUM|HIGH","summary":"one sentence"}`;
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${state.geminiKey}`,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+      });
+      if (resp.ok) {
+        const d = await resp.json();
+        let raw = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        raw = raw.replace(/```json|```/g,'').trim();
+        const ai = JSON.parse(raw);
+        document.getElementById('fraud-text').textContent = data.reason + ' | Gemini AI: ' + ai.summary;
+      }
+    }
+  } catch(e) {
+    resultEl.className = 'fraud-result warn show';
+    document.getElementById('fraud-title').textContent = '⚠ Check Failed';
+    document.getElementById('fraud-text').textContent = e.message;
+  }
+  btn.innerHTML = '🛡 AI Check'; btn.disabled = false;
+}
+
+async function testApiKey() {
+  const key = document.getElementById('profile-gemini-key').value.trim() || state.geminiKey;
+  const result = document.getElementById('api-test-result');
+  if (!key) { result.textContent = 'Enter an API key first.'; return; }
+  result.innerHTML = '<span class="spinner"></span> Testing...';
+  try {
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({contents:[{parts:[{text:'Say "NeoBank AI ready" in 4 words.'}]}]})
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const d = await resp.json();
+    const msg = d.candidates?.[0]?.content?.parts?.[0]?.text;
+    result.style.color = 'var(--success)'; result.textContent = '✓ Connected! Response: ' + msg;
+  } catch(e) {
+    result.style.color = 'var(--danger)'; result.textContent = '✗ Failed: ' + e.message;
+  }
+}
+
+// ── HELPERS ─────────────────────────────────────────
+function toggleThis(btn) { btn.classList.toggle('on'); }
+
+function formatDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+let toastTimeout;
+function showToast(icon, title, sub) {
+  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-sub').textContent = sub;
+  const toast = document.getElementById('toast');
+  toast.style.display = 'flex';
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 3500);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('loan-amount')?.addEventListener('input', () => {
+    if (document.getElementById('loan-amount').value) previewLoan();
+  });
+  init();
+  updateApiStatus();
+});
+
+init();
+updateApiStatus();
+</script>
+</body>
+</html>
